@@ -5,16 +5,36 @@ This repository contains tools to refine Ilastik-generated segmentation masks fo
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
-Ensure you have `uv` installed. If not, install it via:
+
+- **Python 3.11–3.13** (3.12 recommended; see `.python-version`)
+- **uv** package manager
+
+**macOS / Linux:**
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 2. Launch the Refinement Viewer
-Run the following command in this directory. This will automatically set up a virtual environment and open Napari with your RGB-mapped images and masks:
-```bash
-uv run python3 refine_masks.py
+**Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
+
+### 2. Launch the Refinement Viewer
+
+**macOS or Windows** — opens a file picker to load images and their Ilastik masks:
+```bash
+uv sync
+uv run python refine_masks_viewer.py
+```
+
+**Demo mode** (loads hardcoded sample files in the repo root):
+```bash
+uv run python refine_masks.py
+```
+
+> **Note:** `pyqt5-qt5` publishes different wheels per platform (Windows uses
+> `5.15.2`; Apple Silicon Mac uses `5.15.19`). After pulling, always run
+> `uv sync` before launching the viewer.
 
 ---
 
