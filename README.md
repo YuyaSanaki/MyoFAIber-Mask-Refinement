@@ -1,8 +1,10 @@
 # Muscle Mask Refinement Workflow
 
-This repository contains tools to refine Ilastik-generated segmentation masks for muscle fiber analysis. It uses **Napari** for interactive pixel-level refinement and **uv** for reproducible environment management.
+Refine Ilastik-generated segmentation masks for muscle fiber analysis in **Napari**, with a reproducible **uv** environment.
 
-## 🚀 Getting Started
+One script (`refine_masks.py`) works on both **macOS** and **Windows** (Windows OpenGL defaults are applied automatically).
+
+## Getting Started
 
 ### 1. Prerequisites
 
@@ -21,15 +23,23 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 ### 2. Launch the Refinement Viewer
 
-**macOS or Windows** — opens a file picker to load images and their Ilastik masks:
 ```bash
 uv sync
-uv run python refine_masks_viewer.py
+uv run python refine_masks.py
 ```
 
-**Demo mode** (loads hardcoded sample files in the repo root):
+This opens an empty Napari window. **Drag-and-drop** your confocal image and/or Ilastik label mask into it.
+
+Napari normally opens `*_Simple Segmentation.tiff` as an Image (default grayscale colormap). This script detects those drops and converts them to a **Labels** layer with the fixed `CLASS_COLORS` colormap.
+
+Optional file picker:
 ```bash
-uv run python refine_masks.py
+uv run python refine_masks.py --dialog
+```
+
+**Demo mode** (loads sample files from the repo root):
+```bash
+uv run python refine_masks.py --demo
 ```
 
 > **Note:** `pyqt5-qt5` publishes different wheels per platform (Windows uses
@@ -50,17 +60,17 @@ that is a **graphics / OpenGL** problem, not a mask-loading bug. Try these in
 PowerShell (one at a time):
 
 ```powershell
-# 1. Desktop GPU (NVIDIA/AMD) — default in refine_masks_viewer.py
+# 1. Desktop GPU (NVIDIA/AMD) — default in refine_masks.py
 $env:QT_OPENGL="desktop"
-uv run python refine_masks_viewer.py
+uv run python refine_masks.py
 
 # 2. Intel integrated GPU / some laptops
 $env:QT_OPENGL="angle"
-uv run python refine_masks_viewer.py
+uv run python refine_masks.py
 
 # 3. Software rendering (slow, but works when GPU/remote desktop fails)
 $env:QT_OPENGL="software"
-uv run python refine_masks_viewer.py
+uv run python refine_masks.py
 ```
 
 Also check:
@@ -70,54 +80,55 @@ Also check:
 
 ---
 
-## 🎨 Color Legend (Custom Labels)
+## Color Legend (Fixed Labels)
 
-The labels are pre-configured with the following mapping:
+Napari uses a fixed colormap (`CLASS_COLORS` in `refine_masks.py`):
 
-| ID | Label Name | Color | Description |
-|:---|:---|:---|:---|
-| **0** | **Uncertain** | 🟢 Soft Cyan | Muted Teal for ambiguous areas |
-| **1** | **Background**| ⚪ Light Gray | Non-muscle/extracellular space |
-| **2** | **Type IIB**  | 🌸 Soft Magenta| Orchid color for IIB fibers |
-| **3** | **Type I**    | 🌿 Soft Green | Sage color for Type I fibers |
-| **4** | **Membrane**  | 🔵 Steel Blue | Fiber boundaries/sarcolemma |
-| **5** | **Type IIA**  | 🍎 Soft Red   | Salmon/Coral for IIA fibers |
-| **6** | **Type IIX**  | ⚫ Soft Black | Charcoal for IIX fibers |
-| **7** | **Vessel**    | 🟡 Soft Gold  | Ochre for blood vessels |
+| ID | Color | RGBA |
+|:---|:---|:---|
+| **0** | Background (transparent) | `0.0, 0.0, 0.0, 0.0` |
+| **1** | Purple | `0.706, 0.490, 0.741, 1.0` |
+| **2** | Yellow | `0.996, 0.969, 0.110, 1.0` |
+| **3** | Dark purple | `0.235, 0.106, 0.529, 1.0` |
+| **4** | Gray | `0.525, 0.565, 0.604, 1.0` |
+| **5** | Dark green | `0.012, 0.306, 0.224, 1.0` |
+| **6** | Teal | `0.259, 0.847, 0.651, 1.0` |
+| **7** | Slate | `0.278, 0.259, 0.345, 1.0` |
+
+Label values are used as-is (no `+1` shift). Eraser paints label **0** (transparent background).
 
 ---
 
-## ⚡ Efficient Refinement Guide
+## Efficient Refinement Guide
 
-To work quickly at "pixel resolution," use these keyboard shortcuts:
-
-### 🛠 Tools
-- **`L` (Eyedropper)**: Click a color on the mask to quickly switch to that label class.
+### Tools
+- **`L` (Eyedropper)**: Click a color on the mask to switch to that label class.
 - **`P` (Paint)**: Switch to the brush tool.
-- **`E` (Erase)**: Switch to the eraser tool (paints label 0).
-- **`[` / `]`**: Decrease / Increase brush size.
-- **`Z` / `Shift + Z`**: Pan and Zoom.
+- **`E` (Erase)**: Eraser (paints label 0).
+- **`[` / `]`**: Decrease / increase brush size.
+- **`Z` / `Shift + Z`**: Pan and zoom.
 
-### 👁 Visualization
-- **`V`**: Toggle mask visibility (on/off) to check the raw image alignment.
-- **Opacity Slider**: Use the slider in the layer list (bottom left) to "see through" the mask while painting.
+### Visualization
+- **`V`**: Toggle mask visibility to check raw image alignment.
+- **Opacity slider**: In the layer list, fade the mask while painting.
 - **`Ctrl + F`**: Toggle full screen.
 
-### 💾 Saving Your Work
-1. **Right-click** the mask layer name (e.g., `WT_Sol_Simple Segmentation.tiff`) in the layer list.
-2. Select **"Save Selected Layer(s)..."**.
-3. **Important**: Save as a new file (e.g., `WT_Sol_Refined.tiff`) to keep your original Ilastik output as a backup.
+### Saving your work
+1. Right-click the mask layer name (e.g. `WT_Sol_Simple Segmentation.tiff`) in the layer list.
+2. Select **Save Selected Layer(s)...**.
+3. Save as a **new** file (e.g. `WT_Sol_Refined.tiff`) so the original Ilastik output stays as a backup.
 
 ---
 
-## 🛠 Image Preparation (Reference)
-The raw 4-channel confocal stacks were converted to RGB using:
+## Image Preparation (Reference)
+
+Raw 4-channel confocal stacks were converted to RGB using:
 - **Magenta**: Channel 1 (Red + Blue)
 - **Green**: Channel 2
 - **Blue**: Channel 3
 - **Red**: Channel 4
 
-If you need to regenerate these, run:
+To regenerate RGB composites:
 ```bash
-uv run python3 make_rgb.py
+uv run python make_rgb.py
 ```
