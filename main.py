@@ -1,5 +1,5 @@
 def main():
-    print("Hello from 20260326musclemaskrefinement!")
+    print("Hello from myofaiber-mask-refinement!")
 
 
 if __name__ == "__main__":

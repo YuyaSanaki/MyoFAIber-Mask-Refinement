@@ -1,7 +1,7 @@
 [project]
-name = "20260326musclemaskrefinement"
+name = "myofaiber-mask-refinement"
 version = "0.1.0"
-description = "Add your description here"
+description = "Refine MyoFAIber *_pred masks in Napari for fine-tuning datasets"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [

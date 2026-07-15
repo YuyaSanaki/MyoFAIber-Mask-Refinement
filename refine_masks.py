@@ -1,12 +1,14 @@
-"""Muscle mask refinement viewer for macOS and Windows.
+"""MyoFAIber mask refinement viewer for macOS and Windows.
+
+Refine MyoFAIber ``*_pred`` label maps in Napari for fine-tuning (FT) datasets.
 
 Usage:
   uv run python refine_masks.py            # empty viewer — drag & drop labels/images
   uv run python refine_masks.py --dialog   # optional file picker
   uv run python refine_masks.py --demo     # load sample files from repo root
 
-Drag-and-drop of Ilastik 'Simple Segmentation' TIFFs is converted to a Labels
-layer with the fixed CLASS_COLORS colormap (napari opens them as Image by default).
+Drag-and-drop of MyoFAIber ``*_pred`` TIFFs is converted to a Labels layer with
+the fixed CLASS_COLORS colormap (napari opens them as Image by default).
 """
 import argparse
 import os
@@ -44,9 +46,9 @@ CLASS_COLORS = {
 }
 
 DEMO_PAIRS = [
-    ("TG_Sol_rgb.png", "TG_Sol_Simple Segmentation.tiff"),
-    ("WT_Sol_rgb.png", "WT_Sol_Simple Segmentation.tiff"),
-    ("WT_TA_rgb.png", "WT_TA_Simple Segmentation.tiff"),
+    ("TG_Sol_rgb.png", "TG_Sol_pred.tiff"),
+    ("WT_Sol_rgb.png", "WT_Sol_pred.tiff"),
+    ("WT_TA_rgb.png", "WT_TA_pred.tiff"),
 ]
 
 # Guard against re-entry when we replace Image → Labels
@@ -67,10 +69,10 @@ def apply_class_colormap(layer: Labels) -> None:
     )
 
 
-def looks_like_label_mask(layer: ImageLayer) -> bool:
-    """Detect Ilastik segmentation masks opened as Image layers."""
+def looks_like_pred_mask(layer: ImageLayer) -> bool:
+    """Detect MyoFAIber ``*_pred`` masks opened as Image layers."""
     name = (layer.name or "").lower()
-    if "simple segmentation" in name or "segmentation" in name:
+    if "_pred" in name or name.endswith("pred"):
         return True
 
     data = np.asarray(layer.data)
@@ -133,7 +135,7 @@ def convert_image_to_class_labels(viewer, image_layer: ImageLayer) -> Labels | N
 
 
 def on_layer_inserted(event, viewer):
-    """Apply CLASS_COLORS to Labels / convert dropped segmentation Images."""
+    """Apply CLASS_COLORS to Labels / convert dropped ``*_pred`` Images."""
     global _APPLYING_COLORMAP
     if _APPLYING_COLORMAP:
         return
@@ -144,7 +146,7 @@ def on_layer_inserted(event, viewer):
         QTimer.singleShot(0, lambda lyr=layer: apply_class_colormap(lyr))
         return
 
-    if isinstance(layer, ImageLayer) and looks_like_label_mask(layer):
+    if isinstance(layer, ImageLayer) and looks_like_pred_mask(layer):
         # Must defer: converting during insert breaks layer selection
         QTimer.singleShot(
             0, lambda lyr=layer: convert_image_to_class_labels(viewer, lyr)
@@ -157,7 +159,7 @@ def install_colormap_hook(viewer):
         lambda event: on_layer_inserted(event, viewer)
     )
     print(
-        "Ready: drag-and-drop label masks (e.g. '*_Simple Segmentation.tiff').\n"
+        "Ready: drag-and-drop MyoFAIber '*_pred' masks.\n"
         "They will be opened as Labels with CLASS_COLORS."
     )
 
@@ -184,8 +186,10 @@ def strip_image_suffix(name):
     return os.path.splitext(name)[0]
 
 
-def is_segmentation_file(path):
-    return "simple segmentation" in os.path.basename(path).lower()
+def is_pred_file(path):
+    """True if path looks like a MyoFAIber ``*_pred`` mask."""
+    stem = os.path.splitext(os.path.basename(path))[0].lower()
+    return stem.endswith("_pred") or stem.endswith("pred")
 
 
 def load_mask_array(mask_path):
@@ -226,15 +230,17 @@ def add_multichannel_image(viewer, img, img_name):
 
 
 def find_mask_path(img_path):
-    """Resolve the Ilastik Simple Segmentation mask next to an image."""
+    """Resolve the MyoFAIber ``*_pred`` mask next to an image."""
     directory = os.path.dirname(img_path)
     img_name = os.path.basename(img_path)
     base_name = strip_image_suffix(img_name)
+    # Prefer ``*_pred``; also accept bare ``*pred`` stems.
     candidates = [
-        f"{base_name}_Simple Segmentation.tiff",
-        f"{base_name}_Simple Segmentation.tif",
-        f"{base_name}_simple_segmentation.tiff",
-        f"{base_name}_simple_segmentation.tif",
+        f"{base_name}_pred.tiff",
+        f"{base_name}_pred.tif",
+        f"{base_name}_pred.png",
+        f"{base_name}pred.tiff",
+        f"{base_name}pred.tif",
     ]
     for name in candidates:
         path = os.path.join(directory, name)
@@ -244,10 +250,10 @@ def find_mask_path(img_path):
 
 
 def load_image_and_mask(viewer, img_path):
-    """Load image + corresponding mask safely."""
+    """Load image + corresponding ``*_pred`` mask safely."""
     img_name = os.path.basename(img_path)
 
-    if is_segmentation_file(img_path):
+    if is_pred_file(img_path):
         mask = load_mask_array(img_path)
         add_class_labels(viewer, mask, img_name)
         return
@@ -289,11 +295,11 @@ def run_demo(viewer):
 
 
 def run_file_picker(viewer):
-    """Open a file dialog and load selected images with their masks."""
+    """Open a file dialog and load selected images with their ``*_pred`` masks."""
     print("Opening file dialog...")
     files, _ = QFileDialog.getOpenFileNames(
         None,
-        "Select Raw Images, RGB Composites, or Segmentation Masks",
+        "Select Raw Images, RGB Composites, or MyoFAIber *_pred Masks",
         "",
         "Images (*.tif *.tiff *.png *.jpg)",
     )
@@ -306,7 +312,9 @@ def run_file_picker(viewer):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Refine muscle segmentation masks in Napari.")
+    parser = argparse.ArgumentParser(
+        description="Refine MyoFAIber *_pred masks in Napari for FT datasets."
+    )
     parser.add_argument(
         "--demo",
         action="store_true",
@@ -329,7 +337,7 @@ def main():
     elif args.dialog:
         run_file_picker(viewer)
     else:
-        print("Drag confocal images and/or '*_Simple Segmentation.tiff' into the viewer.")
+        print("Drag confocal images and/or MyoFAIber '*_pred' masks into the viewer.")
 
     napari.run()
 

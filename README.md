@@ -1,8 +1,14 @@
-# Muscle Mask Refinement Workflow
+# MyoFAIber Mask Refinement
 
-Refine Ilastik-generated segmentation masks for muscle fiber analysis in **Napari**, with a reproducible **uv** environment.
+Refine MyoFAIber `*_pred` segmentation masks in **Napari** for fine-tuning (FT) datasets, with a reproducible **uv** environment.
 
 One script (`refine_masks.py`) works on both **macOS** and **Windows** (Windows OpenGL defaults are applied automatically).
+
+## Workflow
+
+1. Run MyoFAIber inference → get `*_pred` label maps.
+2. Open image + `_pred` here and correct boundaries / class IDs.
+3. Save refined masks as FT training labels (keep the original `_pred` as backup).
 
 ## Getting Started
 
@@ -28,9 +34,13 @@ uv sync
 uv run python refine_masks.py
 ```
 
-This opens an empty Napari window. **Drag-and-drop** your confocal image and/or Ilastik label mask into it.
+This opens an empty Napari window. **Drag-and-drop** your confocal image and/or MyoFAIber `*_pred` mask into it.
 
-Napari normally opens `*_Simple Segmentation.tiff` as an Image (default grayscale colormap). This script detects those drops and converts them to a **Labels** layer with the fixed `CLASS_COLORS` colormap.
+Napari normally opens `*_pred.tiff` as an Image (default grayscale colormap). This script detects those drops and converts them to a **Labels** layer with the fixed `CLASS_COLORS` colormap.
+
+When you drop an image, the viewer also looks for a sibling mask:
+
+- `{stem}_pred.tiff` / `{stem}_pred.tif` / `{stem}_pred.png`
 
 Optional file picker:
 ```bash
@@ -113,10 +123,10 @@ Label values are used as-is (no `+1` shift). Eraser paints label **0** (transpar
 - **Opacity slider**: In the layer list, fade the mask while painting.
 - **`Ctrl + F`**: Toggle full screen.
 
-### Saving your work
-1. Right-click the mask layer name (e.g. `WT_Sol_Simple Segmentation.tiff`) in the layer list.
+### Saving for FT
+1. Right-click the mask layer name (e.g. `WT_Sol_pred.tiff`) in the layer list.
 2. Select **Save Selected Layer(s)...**.
-3. Save as a **new** file (e.g. `WT_Sol_Refined.tiff`) so the original Ilastik output stays as a backup.
+3. Save as a **new** file (e.g. `WT_Sol_refined.tiff`) so the original MyoFAIber `_pred` stays as a backup for comparison / re-export.
 
 ---
 
