@@ -90,22 +90,24 @@ Also check:
 
 ---
 
-## Color Legend (Fixed Labels)
+## Class Legend (same as MyoFAIber WebUI)
 
-Napari uses a fixed colormap (`CLASS_COLORS` in `refine_masks.py`):
+Pixel values in `*_pred.tif` / refined masks are **class IDs** (same as Fine-tune Target). Napari uses the fixed colormap `CLASS_COLORS` in `refine_masks.py` (kept in sync with [MyoFAIber](https://github.com/YuyaSanaki/MyoFAIber) WebUI).
 
-| ID | Color | RGBA |
-|:---|:---|:---|
-| **0** | Background (transparent) | `0.0, 0.0, 0.0, 0.0` |
-| **1** | Purple | `0.706, 0.490, 0.741, 1.0` |
-| **2** | Yellow | `0.996, 0.969, 0.110, 1.0` |
-| **3** | Dark purple | `0.235, 0.106, 0.529, 1.0` |
-| **4** | Gray | `0.525, 0.565, 0.604, 1.0` |
-| **5** | Dark green | `0.012, 0.306, 0.224, 1.0` |
-| **6** | Teal | `0.259, 0.847, 0.651, 1.0` |
-| **7** | Slate | `0.278, 0.259, 0.345, 1.0` |
+| ID | Class | Fiber / structure | Stain → RGB composite | Napari paint color |
+|:---|:---|:---|:---|:---|
+| **0** | Uncertain | Fold, artifact, or unclear region | — | Transparent (eraser paints **0**) |
+| **1** | Background | Non-fiber / interstitial space | — | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#B47DBD;vertical-align:middle;"></span> Purple (`#B47DBD`) |
+| **2** | Type IIB | Fast glycolytic fiber | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#FF00FF;vertical-align:middle;"></span> Ch1 → Magenta | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#FEF71C;vertical-align:middle;"></span> Yellow (`#FEF71C`) |
+| **3** | Type I | Slow oxidative fiber | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#00FF00;vertical-align:middle;"></span> Ch2 → Green | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#3C1B87;vertical-align:middle;"></span> Dark purple (`#3C1B87`) |
+| **4** | Membrane | Sarcolemma (e.g. WGA) | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#0000FF;vertical-align:middle;"></span> Ch3 → Blue | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#86909A;vertical-align:middle;"></span> Gray (`#86909A`) |
+| **5** | Type IIA | Fast oxidative fiber | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#FF0000;vertical-align:middle;"></span> Ch4 → Red | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#034E39;vertical-align:middle;"></span> Dark green (`#034E39`) |
+| **6** | Type IIX | Fiber type inferred from no type stain | No dedicated stain (inferred) | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#42D8A6;vertical-align:middle;"></span> Teal (`#42D8A6`) |
+| **7** | Vessel | Blood vessel | — | <span style="display:inline-block;width:1.1em;height:1.1em;border:1px solid #666;background:#474258;vertical-align:middle;"></span> Slate (`#474258`) |
 
-Label values are used as-is (no `+1` shift). Eraser paints label **0** (transparent background).
+RGB composite channels: **Ch1 Magenta · Ch2 Green · Ch3 Blue · Ch4 Red**.
+
+Label values are used as-is (no `+1` shift). Eraser paints label **0** (transparent / Uncertain).
 
 ---
 
