@@ -56,6 +56,43 @@ uv run python refine_masks.py --demo
 > `5.15.2`; Apple Silicon Mac uses `5.15.19`). After pulling, always run
 > `uv sync` before launching the viewer.
 
+### Windows: `Could not find the Qt platform plugin "windows"`
+
+If launching fails immediately with:
+
+```
+qt.qpa.plugin: Could not find the Qt platform plugin "windows" in ""
+This application failed to start because no Qt platform plugin could be
+initialized. Reinstalling the application may fix this problem.
+```
+
+Qt can't find `qwindows.dll`. This is usually caused by a **conflicting Qt**
+on your system (a base **conda** env, an **OpenCV/`cv2`** wheel, or another Qt
+app on `PATH`) whose environment variables hijack plugin discovery.
+
+`refine_masks.py` now auto-repoints Qt at PyQt5's own plugins on startup, so in
+most cases just re-run it:
+
+```powershell
+uv sync
+uv run python refine_masks.py
+```
+
+If it still fails, run from a **clean shell** (not an activated `conda`
+environment) and clear stale variables, then retry:
+
+```powershell
+Remove-Item Env:QT_QPA_PLATFORM_PLUGIN_PATH -ErrorAction SilentlyContinue
+Remove-Item Env:QT_PLUGIN_PATH -ErrorAction SilentlyContinue
+uv run python refine_masks.py
+```
+
+As a last resort, reinstall the Windows Qt wheel:
+
+```powershell
+uv sync --reinstall-package pyqt5-qt5
+```
+
 ### Windows: OpenGL / `self._finalCall` error
 
 If napari crashes with something like:

@@ -11,8 +11,61 @@ Drag-and-drop of MyoFAIber ``*_pred`` TIFFs is converted to a Labels layer with
 the fixed CLASS_COLORS colormap (napari opens them as Image by default).
 """
 import argparse
+import glob
+import importlib.util
 import os
 import sys
+
+
+def _fix_windows_qt_plugin_path():
+    """Point Qt at PyQt5's own ``platforms`` plugins before Qt loads.
+
+    Fixes the classic Windows error::
+
+        This application failed to start because no Qt platform plugin could
+        be initialized. ... Could not find the Qt platform plugin "windows"
+        in ""
+
+    Root cause is usually a conflicting Qt on the system (a base conda env, an
+    OpenCV/`cv2` wheel, or another Qt app on ``PATH``) whose plugin variables
+    hijack plugin discovery so ``qwindows.dll`` is never found. We clear those
+    stale variables and repoint them at the PyQt5 install we actually run with.
+    """
+    spec = importlib.util.find_spec("PyQt5")
+    if spec is None or not spec.submodule_search_locations:
+        return  # PyQt5 not importable here; nothing we can do.
+
+    pyqt5_dir = spec.submodule_search_locations[0]
+    # PyQt5 ships plugins under Qt5/plugins (5.15.x) or Qt/plugins (older).
+    candidates = [
+        os.path.join(pyqt5_dir, "Qt5", "plugins"),
+        os.path.join(pyqt5_dir, "Qt", "plugins"),
+    ]
+    plugins_dir = next((p for p in candidates if os.path.isdir(p)), None)
+    if plugins_dir is None:
+        return
+
+    platforms_dir = os.path.join(plugins_dir, "platforms")
+    if not glob.glob(os.path.join(platforms_dir, "qwindows*")):
+        print(
+            "Warning: qwindows plugin not found under "
+            f"{platforms_dir}. Try: uv sync --reinstall-package pyqt5-qt5"
+        )
+
+    # A wrong value here (e.g. from conda) is the usual culprit — overwrite it.
+    os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = platforms_dir
+    os.environ["QT_PLUGIN_PATH"] = plugins_dir
+    # Ensure the Qt DLLs next to the plugins are resolvable.
+    qt_bin = os.path.join(os.path.dirname(plugins_dir), "bin")
+    if os.path.isdir(qt_bin):
+        os.environ["PATH"] = qt_bin + os.pathsep + os.environ.get("PATH", "")
+        if hasattr(os, "add_dll_directory"):
+            try:
+                os.add_dll_directory(qt_bin)
+            except OSError:
+                pass
+    print(f"Windows Qt plugin path: {platforms_dir}")
+
 
 # Must run before Qt/napari/vispy load.
 # On Windows, OpenGL backend affects napari/vispy. If you see
@@ -21,6 +74,7 @@ import sys
 #   set QT_OPENGL=angle     (Intel iGPU, some laptops)
 #   set QT_OPENGL=software  (slowest; last resort / remote desktop)
 if sys.platform == "win32":
+    _fix_windows_qt_plugin_path()
     os.environ.setdefault("QT_OPENGL", "desktop")
     print(f"Windows OpenGL backend: QT_OPENGL={os.environ['QT_OPENGL']}")
 
