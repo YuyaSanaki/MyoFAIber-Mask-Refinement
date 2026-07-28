@@ -89,13 +89,13 @@ from napari.utils.colormaps import DirectLabelColormap
 
 CLASS_COLORS = {
     None: [0.0, 0.0, 0.0, 0.0],  # unmapped labels
-    0: [0.0, 0.0, 0.0, 0.0],  # background
+    0: [0.0, 0.0, 0.0, 0.0],     # background
     1: [0.898, 0.867, 0.698, 1.0],  # beige
     2: [0.482, 0.557, 0.059, 1.0],  # olive green
-    3: [0.996, 0.969, 0.110, 1.0],  # yellow
-    4: [0.690, 0.047, 0.247, 1.0],  # pink
+    3: [0.980, 0.980, 0.700, 1.0],  # yellow
+    4: [0.690, 0.047, 0.247, 1.0],  # pink (dark)
     5: [0.361, 0.718, 0.871, 1.0],  # blue
-    6: [0.796, 0.196, 0.780, 1.0],  # magenta
+    6: [0.980, 0.700, 0.980, 1.0],  # bright magenta (変更箇所)
     7: [0.525, 0.565, 0.604, 1.0],  # gray
 }
 
