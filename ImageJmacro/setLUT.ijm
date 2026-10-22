@@ -1,3 +1,5 @@
+// LEGACY. This LUT does not match refine_masks.py.
+// Class colors and names for refinement are the Napari Classes panel.
 // Initialize arrays
 r = newArray(256);
 g = newArray(256);
