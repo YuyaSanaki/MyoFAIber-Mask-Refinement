@@ -43,7 +43,7 @@ Run MyoFAIber inference first so you have `*_pred` label maps. The viewer opens 
    - `TG_Sol.tif` or `TG_Sol_rgb.png` → `TG_Sol_pred.tiff` / `.tif` / `.png`
    - `TG_Sol_pred.tiff` → `TG_Sol_rgb.png` if that file exists, otherwise `TG_Sol.tif`
 2. A raw 4-channel TIFF is shown as Ch1 magenta / Ch2 green / Ch3 blue / Ch4 red. You do not need ImageJ or `make_rgb.py` first. Napari would open `*_pred` as a grayscale image; this viewer turns it into a Labels layer with the class colors below.
-3. Press `0`–`7`, or click the **Classes** panel, and paint. `0` is Uncertain. `1` is Background.
+3. Press `0`–`8`, or click the **Classes** panel, and paint. `0` is Uncertain (soft cyan). `1` is Background.
 4. Press `Ctrl+S` (`⌘S` on macOS). The original `*_pred` stays as a backup. A uint8 `*_refined.tif` is written beside it (`WT_Sol_pred.tiff` → `WT_Sol_refined.tif`). Press the shortcut again to overwrite that refined file.
 
 Optional file picker:
@@ -131,37 +131,38 @@ Also check:
 
 ---
 
-## Class Legend (same as MyoFAIber WebUI)
+## Class Legend
 
-Pixel values in `*_pred.tif` / refined masks are **class IDs** (same as Fine-tune Target and the [MyoFAIber](https://github.com/YuyaSanaki/MyoFAIber) WebUI). Napari paint colors are `CLASS_COLORS` in `refine_masks.py`. Type I and Type IIX are lightened so they stay distinct while painting.
+Pixel values in `*_pred.tif` / refined masks are **class IDs** (same as Fine-tune Target and the [MyoFAIber](https://github.com/YuyaSanaki/MyoFAIber) WebUI for 0–7). Napari paint colors are the RGB bytes in `ImageJmacro/setLUT.ijm` (`CLASS_RGB` in `refine_masks.py`).
 
-| ID | Class | Fiber / structure | Stain → RGB composite | Napari paint color |
+| ID | Class | Fiber / structure | Stain → RGB composite | Napari / ImageJ color |
 |:---|:---|:---|:---|:---|
-| **0** | Uncertain | Fold, artifact, or unclear region | — | Transparent (eraser paints **0**) |
-| **1** | Background | Non-fiber / interstitial space | — | <img alt="#E5DDB2" src="https://img.shields.io/badge/-%23E5DDB2?style=flat-square&labelColor=%23E5DDB2&color=%23E5DDB2" height="16"/> Beige (#E5DDB2) |
-| **2** | Type IIB | Fast glycolytic fiber | <img alt="#FF00FF" src="https://img.shields.io/badge/-%23FF00FF?style=flat-square&labelColor=%23FF00FF&color=%23FF00FF" height="16"/> Ch1 → Magenta (#FF00FF) | <img alt="#7B8E0F" src="https://img.shields.io/badge/-%237B8E0F?style=flat-square&labelColor=%237B8E0F&color=%237B8E0F" height="16"/> Olive green (#7B8E0F) |
-| **3** | Type I | Slow oxidative fiber | <img alt="#00FF00" src="https://img.shields.io/badge/-%2300FF00?style=flat-square&labelColor=%2300FF00&color=%2300FF00" height="16"/> Ch2 → Green (#00FF00) | <img alt="#FAFAB2" src="https://img.shields.io/badge/-%23FAFAB2?style=flat-square&labelColor=%23FAFAB2&color=%23FAFAB2" height="16"/> Pale yellow (#FAFAB2) |
-| **4** | Membrane | Sarcolemma (e.g. WGA) | <img alt="#0000FF" src="https://img.shields.io/badge/-%230000FF?style=flat-square&labelColor=%230000FF&color=%230000FF" height="16"/> Ch3 → Blue (#0000FF) | <img alt="#B00C3F" src="https://img.shields.io/badge/-%23B00C3F?style=flat-square&labelColor=%23B00C3F&color=%23B00C3F" height="16"/> Pink (#B00C3F) |
-| **5** | Type IIA | Fast oxidative fiber | <img alt="#FF0000" src="https://img.shields.io/badge/-%23FF0000?style=flat-square&labelColor=%23FF0000&color=%23FF0000" height="16"/> Ch4 → Red (#FF0000) | <img alt="#5CB7DE" src="https://img.shields.io/badge/-%235CB7DE?style=flat-square&labelColor=%235CB7DE&color=%235CB7DE" height="16"/> Blue (#5CB7DE) |
-| **6** | Type IIX | Fiber type inferred from no type stain | No dedicated stain (inferred) | <img alt="#FAB2FA" src="https://img.shields.io/badge/-%23FAB2FA?style=flat-square&labelColor=%23FAB2FA&color=%23FAB2FA" height="16"/> Bright magenta (#FAB2FA) |
-| **7** | Vessel | Blood vessel | — | <img alt="#86909A" src="https://img.shields.io/badge/-%2386909A?style=flat-square&labelColor=%2386909A&color=%2386909A" height="16"/> Gray (#86909A) |
+| **0** | Uncertain | Fold, artifact, or unclear region | — | <img alt="#64C8D2" src="https://img.shields.io/badge/-%2364C8D2?style=flat-square&labelColor=%2364C8D2&color=%2364C8D2" height="16"/> Soft cyan (#64C8D2) |
+| **1** | Background | Non-fiber / interstitial space | — | <img alt="#E6E6E6" src="https://img.shields.io/badge/-%23E6E6E6?style=flat-square&labelColor=%23E6E6E6&color=%23E6E6E6" height="16"/> Light gray (#E6E6E6) |
+| **2** | Type IIB | Fast glycolytic fiber | <img alt="#FF00FF" src="https://img.shields.io/badge/-%23FF00FF?style=flat-square&labelColor=%23FF00FF&color=%23FF00FF" height="16"/> Ch1 → Magenta (#FF00FF) | <img alt="#D282D2" src="https://img.shields.io/badge/-%23D282D2?style=flat-square&labelColor=%23D282D2&color=%23D282D2" height="16"/> Soft magenta (#D282D2) |
+| **3** | Type I | Slow oxidative fiber | <img alt="#00FF00" src="https://img.shields.io/badge/-%2300FF00?style=flat-square&labelColor=%2300FF00&color=%2300FF00" height="16"/> Ch2 → Green (#00FF00) | <img alt="#82BE82" src="https://img.shields.io/badge/-%2382BE82?style=flat-square&labelColor=%2382BE82&color=%2382BE82" height="16"/> Soft green (#82BE82) |
+| **4** | Membrane | Sarcolemma (e.g. WGA) | <img alt="#0000FF" src="https://img.shields.io/badge/-%230000FF?style=flat-square&labelColor=%230000FF&color=%230000FF" height="16"/> Ch3 → Blue (#0000FF) | <img alt="#4682B4" src="https://img.shields.io/badge/-%234682B4?style=flat-square&labelColor=%234682B4&color=%234682B4" height="16"/> Steel blue (#4682B4) |
+| **5** | Type IIA | Fast oxidative fiber | <img alt="#FF0000" src="https://img.shields.io/badge/-%23FF0000?style=flat-square&labelColor=%23FF0000&color=%23FF0000" height="16"/> Ch4 → Red (#FF0000) | <img alt="#E67373" src="https://img.shields.io/badge/-%23E67373?style=flat-square&labelColor=%23E67373&color=%23E67373" height="16"/> Soft red (#E67373) |
+| **6** | Type IIX | Fiber type inferred from no type stain | No dedicated stain (inferred) | <img alt="#323232" src="https://img.shields.io/badge/-%23323232?style=flat-square&labelColor=%23323232&color=%23323232" height="16"/> Charcoal (#323232) |
+| **7** | Vessel | Blood vessel | — | <img alt="#DCBE50" src="https://img.shields.io/badge/-%23DCBE50?style=flat-square&labelColor=%23DCBE50&color=%23DCBE50" height="16"/> Soft gold (#DCBE50) |
+| **8** | Nuclei | Nuclei | — | <img alt="#5A5AD2" src="https://img.shields.io/badge/-%235A5AD2?style=flat-square&labelColor=%235A5AD2&color=%235A5AD2" height="16"/> Soft indigo (#5A5AD2) |
 
 RGB composite channels: **Ch1 Magenta · Ch2 Green · Ch3 Blue · Ch4 Red**.
 
-Label values are used as-is (no `+1` shift). Eraser paints label **0** (transparent / Uncertain).
+Label values are used as-is (no `+1` shift). The eraser paints label **0** (soft cyan / Uncertain), not Background.
 
 ---
 
 ## Efficient Refinement Guide
 
 ### Pick a class, then paint
-- **Classes panel** or **`0`–`7`**: select that class and start the brush. `0` is Uncertain, `1` is Background. These keys do **not** switch Napari tools.
+- **Classes panel** or **`0`–`8`**: select that class and start the brush. `0` is Uncertain (soft cyan), `1` is Background. These keys do **not** switch Napari tools.
 - **`P`**: brush. **`E`**: eraser. The eraser paints **0 Uncertain**, not Background.
 - **`L`**: eyedropper. **`F`**: fill. **`Z`**: pan (zoom with the scroll wheel).
 - **`[` / `]`**: smaller / larger brush.
 - **`V`**: hide or show the mask to check alignment. Opacity slider fades it while painting.
 
-`M` does not create a new class. Labels stay in `0`–`7`.
+`M` does not create a new class. Labels stay in `0`–`8`.
 
 ### Saving for FT
 Press **`Ctrl+S`** (**`⌘S`** on macOS).

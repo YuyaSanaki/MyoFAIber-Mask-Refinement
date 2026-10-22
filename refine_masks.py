@@ -9,7 +9,7 @@ Usage:
 
 Drop either the image or the ``*_pred`` mask. The file beside it opens too.
 A 4-channel TIFF is shown as the stain composite (Ch1 magenta, Ch2 green,
-Ch3 blue, Ch4 red). Keys ``0``–``7`` select that class and start the brush.
+Ch3 blue, Ch4 red). Keys ``0``–``8`` select that class and start the brush.
 ``Ctrl+S`` (macOS ``⌘S``) writes ``*_refined.tif`` next to the original
 ``*_pred``, which is left unchanged.
 """
@@ -95,19 +95,27 @@ from napari.layers import Labels
 from napari.layers._source import layer_source
 from napari.utils.colormaps import DirectLabelColormap
 
-# Class IDs match the MyoFAIber WebUI / FT target.
-# 3 and 6 are lightened so they stay distinct while painting.
-CLASS_COLORS = {
-    None: [0.0, 0.0, 0.0, 0.0],  # unmapped labels
-    0: [0.0, 0.0, 0.0, 0.0],  # Uncertain (transparent; eraser paints 0)
-    1: [0.898, 0.867, 0.698, 1.0],  # beige — Background
-    2: [0.482, 0.557, 0.059, 1.0],  # olive green — Type IIB
-    3: [0.980, 0.980, 0.700, 1.0],  # pale yellow — Type I (#FAFAB2)
-    4: [0.690, 0.047, 0.247, 1.0],  # pink — Membrane
-    5: [0.361, 0.718, 0.871, 1.0],  # blue — Type IIA
-    6: [0.980, 0.700, 0.980, 1.0],  # bright magenta — Type IIX (#FAB2FA)
-    7: [0.525, 0.565, 0.604, 1.0],  # gray — Vessel
+# Same RGB bytes as ImageJmacro/setLUT.ijm. Keep the two in sync.
+CLASS_RGB = {
+    0: (100, 200, 210),  # #64C8D2 soft cyan — Uncertain
+    1: (230, 230, 230),  # #E6E6E6 light gray — Background
+    2: (210, 130, 210),  # #D282D2 soft magenta — Type IIB
+    3: (130, 190, 130),  # #82BE82 soft green — Type I
+    4: (70, 130, 180),  # #4682B4 steel blue — Membrane
+    5: (230, 115, 115),  # #E67373 soft red — Type IIA
+    6: (50, 50, 50),  # #323232 charcoal — Type IIX
+    7: (220, 190, 80),  # #DCBE50 soft gold — Vessel
+    8: (90, 90, 210),  # #5A5AD2 soft indigo — Nuclei
 }
+
+
+def _rgba(rgb):
+    red, green, blue = rgb
+    return [red / 255.0, green / 255.0, blue / 255.0, 1.0]
+
+
+CLASS_COLORS = {None: [0.0, 0.0, 0.0, 0.0]}  # unmapped labels stay transparent
+CLASS_COLORS.update({class_id: _rgba(rgb) for class_id, rgb in CLASS_RGB.items()})
 
 CLASS_NAMES = (
     (0, "Uncertain"),
@@ -118,6 +126,7 @@ CLASS_NAMES = (
     (5, "Type IIA"),
     (6, "Type IIX"),
     (7, "Vessel"),
+    (8, "Nuclei"),
 )
 
 CLASS_NAME = dict(CLASS_NAMES)
@@ -144,13 +153,9 @@ def make_class_colormap():
 
 
 def class_hex(class_id):
-    """``#RRGGBB`` for a class, using the same rounding as the README badges."""
-    red, green, blue = CLASS_COLORS[class_id][:3]
-    return "#{:02X}{:02X}{:02X}".format(
-        int(round(red * 255)),
-        int(round(green * 255)),
-        int(round(blue * 255)),
-    )
+    """``#RRGGBB`` for a class. These are the ImageJ LUT bytes, not a float rounding."""
+    red, green, blue = CLASS_RGB[class_id]
+    return f"#{red:02X}{green:02X}{blue:02X}"
 
 
 def apply_class_colormap(layer: Labels) -> None:
@@ -536,20 +541,24 @@ def on_layer_inserted(event, viewer):
 
 
 def clamp_selected_label(layer):
-    """Keep the brush on classes 0–7. ``M`` and ``=`` cannot invent class 8."""
+    """Keep the brush on the ImageJ classes. ``M`` cannot invent a new id."""
     global _CLAMPING_LABEL
     if _CLAMPING_LABEL:
         return
     value = int(layer.selected_label)
-    if 0 <= value <= 7:
+    highest = max(CLASS_NAME)
+    if 0 <= value <= highest:
         return
-    clamped = min(7, max(0, value))
+    clamped = min(highest, max(0, value))
     _CLAMPING_LABEL = True
     try:
         layer.selected_label = clamped
     finally:
         _CLAMPING_LABEL = False
-    print(f"Label {value} is outside 0–7; using {clamped} ({CLASS_NAME[clamped]}).")
+    print(
+        f"Label {value} is outside 0–{highest}; "
+        f"using {clamped} ({CLASS_NAME[clamped]})."
+    )
 
 
 def attach_label_guard(layer):
@@ -653,9 +662,10 @@ def save_active_labels(viewer):
         viewer.status = message
         print(message)
         return
-    if unique.size and int(unique.max()) > 7:
+    highest = max(CLASS_NAME)
+    if unique.size and int(unique.max()) > highest:
         print(
-            f"Warning: '{layer.name}' has labels outside 0–7: "
+            f"Warning: '{layer.name}' has labels outside 0–{highest}: "
             f"{unique.astype(int).tolist()}"
         )
 
@@ -698,7 +708,7 @@ def install_class_keys(viewer):
     def _select(viewer, class_id):
         select_class(viewer, class_id)
 
-    for class_id in range(8):
+    for class_id, _name in CLASS_NAMES:
         viewer.bind_key(
             str(class_id),
             lambda viewer, class_id=class_id: _select(viewer, class_id),
@@ -718,7 +728,7 @@ class ClassPanel(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(4)
         hint = QLabel(
-            "Press 0–7 or click a class, then paint.\n"
+            "Press 0–8 or click a class, then paint.\n"
             f"{SAVE_SHORTCUT} saves *_refined.tif.\n"
             "The original *_pred is kept.\n"
             "E paints 0 Uncertain."
@@ -778,7 +788,7 @@ def install_class_panel(viewer):
 
 
 def install_hooks(viewer):
-    """Color labels, pair files, and keep the brush on classes 0–7."""
+    """Color labels, pair files, and keep the brush on the ImageJ classes."""
     viewer.layers.events.inserted.connect(
         lambda event: on_layer_inserted(event, viewer)
     )
@@ -789,7 +799,7 @@ def install_hooks(viewer):
         "Ready.\n"
         "  Drop an image or a *_pred mask — the file beside it opens too.\n"
         "  A 4-channel TIFF is shown as magenta / green / blue / red.\n"
-        "  Press 0–7 (or use the Classes panel) and paint.\n"
+        "  Press 0–8 (or use the Classes panel) and paint.\n"
         f"  {SAVE_SHORTCUT} saves *_refined.tif next to the original *_pred.\n"
         "  P paint, E erase (paints 0 Uncertain), L pick, F fill, Z pan, [ ] brush."
     )
@@ -798,7 +808,7 @@ def install_hooks(viewer):
 def print_label_guide():
     print("--- LABEL GUIDE ---")
     for class_id, name in CLASS_NAMES:
-        print(f"  {class_id}: {name} ({class_hex(class_id) if class_id else 'transparent'})")
+        print(f"  {class_id}: {name} ({class_hex(class_id)})")
     print("Eraser (E) paints 0 Uncertain. Background is 1.")
 
 
