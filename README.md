@@ -4,20 +4,13 @@ Refine MyoFAIber `*_pred` segmentation masks in **Napari** for fine-tuning (FT) 
 
 One script (`refine_masks.py`) works on both **macOS** and **Windows** (Windows OpenGL defaults are applied automatically).
 
-## Workflow
+## Usage
 
-1. Run MyoFAIber inference → get `*_pred` label maps.
-2. `uv run python refine_masks.py`
-3. Drag in **either** the image or the `*_pred` mask. The other file in the same folder opens automatically. A 4-channel TIFF is shown as Ch1 magenta / Ch2 green / Ch3 blue / Ch4 red.
-4. Press `0`–`7` (or click the **Classes** panel) and paint.
-5. Press `Ctrl+S` (`⌘S` on macOS). The original `*_pred` stays as a backup. A uint8 `*_refined.tif` is written beside it.
+### 1. Install uv
 
-## Getting Started
-
-### 1. Prerequisites
-
-- **Python 3.11–3.13** (3.12 recommended; see `.python-version`)
-- **uv** package manager
+- **Git**
+- **Python 3.11–3.13** (3.12 recommended). If it is not installed yet, `uv sync` can install it.
+- **uv**
 
 **macOS / Linux:**
 ```bash
@@ -29,33 +22,43 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### 2. Launch the Refinement Viewer
+On Windows, Git comes from [Git for Windows](https://git-scm.com/download/win). Check with `git --version`.
+
+### 2. Clone, sync, and open the viewer
 
 ```bash
+git clone https://github.com/YuyaSanaki/MyoFAIber-Mask-Refinement.git
+cd MyoFAIber-Mask-Refinement
 uv sync
 uv run python refine_masks.py
 ```
 
-This opens an empty Napari window. **Drag-and-drop** either the confocal image or the MyoFAIber `*_pred` mask. The matching file next to it opens as well:
+The same four commands work in Windows PowerShell. After a later `git pull`, run `uv sync` again before opening the viewer.
 
-- image `TG_Sol.tif` or `TG_Sol_rgb.png` → `TG_Sol_pred.tiff` / `.tif` / `.png`
-- mask `TG_Sol_pred.tiff` → `TG_Sol_rgb.png` if it exists, otherwise `TG_Sol.tif`
+### 3. Correct masks
 
-Napari normally opens `*_pred.tiff` as an Image (default grayscale colormap). This script converts those files to a **Labels** layer with the fixed `CLASS_COLORS` colormap. A raw 4-channel TIFF is replaced by the RGB composite used for refinement (Ch1 magenta, Ch2 green, Ch3 blue, Ch4 red), so you do not need ImageJ or `make_rgb.py` first.
+Run MyoFAIber inference first so you have `*_pred` label maps. The viewer opens empty.
+
+1. Drag in **either** the confocal image or the `*_pred` mask. The other file in the same folder opens automatically.
+   - `TG_Sol.tif` or `TG_Sol_rgb.png` → `TG_Sol_pred.tiff` / `.tif` / `.png`
+   - `TG_Sol_pred.tiff` → `TG_Sol_rgb.png` if that file exists, otherwise `TG_Sol.tif`
+2. A raw 4-channel TIFF is shown as Ch1 magenta / Ch2 green / Ch3 blue / Ch4 red. You do not need ImageJ or `make_rgb.py` first. Napari would open `*_pred` as a grayscale image; this viewer turns it into a Labels layer with the class colors below.
+3. Press `0`–`7`, or click the **Classes** panel, and paint. `0` is Uncertain. `1` is Background.
+4. Press `Ctrl+S` (`⌘S` on macOS). The original `*_pred` stays as a backup. A uint8 `*_refined.tif` is written beside it (`WT_Sol_pred.tiff` → `WT_Sol_refined.tif`). Press the shortcut again to overwrite that refined file.
 
 Optional file picker:
 ```bash
 uv run python refine_masks.py --dialog
 ```
 
-**Demo mode** (loads sample files from the repo root):
+Demo mode loads sample files from the repo root, when those files are present:
 ```bash
 uv run python refine_masks.py --demo
 ```
 
 > **Note:** `pyqt5-qt5` publishes different wheels per platform (Windows uses
-> `5.15.2`; Apple Silicon Mac uses `5.15.19`). After pulling, always run
-> `uv sync` before launching the viewer.
+> `5.15.2`; Apple Silicon Mac uses `5.15.19`). After `git clone` or `git pull`,
+> run `uv sync` before launching the viewer.
 
 ### Windows: `Could not find the Qt platform plugin "windows"`
 
